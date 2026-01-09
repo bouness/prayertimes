@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Moon, Sun, MapPin, Calendar, Settings, Clock, Globe } from 'lucide-react';
 
 const PrayerTimesApp = () => {
@@ -9,11 +9,8 @@ const PrayerTimesApp = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [language, setLanguage] = useState('en');
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const [settings, setSettings] = useState({
-    calculationMethod: 2,
-    asrMethod: 1,
-    madhab: 0
-  });
+  const calculationMethod = 2; // Muslim World League
+  const madhab = 0; // Shafi
 
   const translations = {
     en: {
@@ -156,25 +153,22 @@ const PrayerTimesApp = () => {
   const t = translations[language];
   const isRTL = t.dir === 'rtl';
 
-  useEffect(() => {
-    getCurrentLocation();
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+  const getCityName = useCallback(async (lat, lng) => {
+    try {
+      const response = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+      );
+      const data = await response.json();
+      setLocation(prev => ({
+        ...prev,
+        city: data.city || data.locality || 'Unknown Location'
+      }));
+    } catch (error) {
+      console.error('Error getting city name:', error);
+    }
   }, []);
 
-  useEffect(() => {
-    if (location) {
-      fetchPrayerTimes();
-    }
-  }, [location, settings]);
-
-  useEffect(() => {
-    if (prayerTimes) {
-      calculateNextPrayer();
-    }
-  }, [prayerTimes, currentTime]);
-
-  const getCurrentLocation = () => {
+  const getCurrentLocation = useCallback(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -191,29 +185,16 @@ const PrayerTimesApp = () => {
         }
       );
     }
-  };
+  }, [getCityName]);
 
-  const getCityName = async (lat, lng) => {
-    try {
-      const response = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
-      );
-      const data = await response.json();
-      setLocation(prev => ({
-        ...prev,
-        city: data.city || data.locality || 'Unknown Location'
-      }));
-    } catch (error) {
-      console.error('Error getting city name:', error);
-    }
-  };
-
-  const fetchPrayerTimes = async () => {
+  const fetchPrayerTimes = useCallback(async () => {
+    if (!location) return;
+    
     setLoading(true);
     try {
       const date = new Date();
       const response = await fetch(
-        `https://api.aladhan.com/v1/timings/${Math.floor(date.getTime() / 1000)}?latitude=${location.lat}&longitude=${location.lng}&method=${settings.calculationMethod}&school=${settings.madhab}`
+        `https://api.aladhan.com/v1/timings/${Math.floor(date.getTime() / 1000)}?latitude=${location.lat}&longitude=${location.lng}&method=${calculationMethod}&school=${madhab}`
       );
       const data = await response.json();
       
@@ -224,9 +205,9 @@ const PrayerTimesApp = () => {
       console.error('Error fetching prayer times:', error);
     }
     setLoading(false);
-  };
+  }, [location]);
 
-  const calculateNextPrayer = () => {
+  const calculateNextPrayer = useCallback(() => {
     if (!prayerTimes) return;
 
     const now = currentTime;
@@ -267,7 +248,25 @@ const PrayerTimesApp = () => {
       time: prayerTimes.Fajr,
       timeLeft: `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`
     });
-  };
+  }, [prayerTimes, currentTime]);
+
+  useEffect(() => {
+    getCurrentLocation();
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, [getCurrentLocation]);
+
+  useEffect(() => {
+    if (location) {
+      fetchPrayerTimes();
+    }
+  }, [location, fetchPrayerTimes]);
+
+  useEffect(() => {
+    if (prayerTimes) {
+      calculateNextPrayer();
+    }
+  }, [prayerTimes, currentTime, calculateNextPrayer]);
 
   const formatTime12Hour = (time24) => {
     const [hours, minutes] = time24.split(':');
