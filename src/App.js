@@ -1,16 +1,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Moon, Sun, MapPin, Calendar, Settings, Clock, Globe } from 'lucide-react';
+import { Moon, Sun, MapPin, Calendar, Settings, Clock, Globe, Volume2, VolumeX, Book, X } from 'lucide-react';
 
 const PrayerTimesApp = () => {
+  // Load initial state from localStorage
   const [location, setLocation] = useState(null);
   const [prayerTimes, setPrayerTimes] = useState(null);
   const [nextPrayer, setNextPrayer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [language, setLanguage] = useState('en');
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const calculationMethod = 2; // Muslim World League
-  const madhab = 0; // Shafi
+  const [showAdhkar, setShowAdhkar] = useState(false);
+  const [adhkarType, setAdhkarType] = useState('morning');
+  const [hijriDate, setHijriDate] = useState(null);
+  
+  // Settings with localStorage persistence
+  const [language, setLanguage] = useState(() => {
+    const saved = localStorage.getItem('prayerApp_language');
+    return saved || 'en';
+  });
+  
+  const [adhanEnabled, setAdhanEnabled] = useState(() => {
+    const saved = localStorage.getItem('prayerApp_adhanEnabled');
+    return saved ? JSON.parse(saved) : false;
+  });
+  
+  const calculationMethod = 2;
+  const madhab = 0;
 
   const translations = {
     en: {
@@ -23,10 +38,18 @@ const PrayerTimesApp = () => {
       calculationMethod: 'Calculation Method: Muslim World League',
       basedOnLocation: 'Times are based on your location',
       notPrayerTime: 'Not a prayer time',
+      adhanEnabled: 'Adhan ON',
+      adhanDisabled: 'Adhan OFF',
+      adhkar: 'Daily Adhkar',
+      morningAdhkar: 'Morning Adhkar',
+      eveningAdhkar: 'Evening Adhkar',
+      testAdhan: 'Test Adhan',
+      fridayPrayer: 'Friday Prayer',
       prayers: {
         Fajr: 'Fajr',
         Sunrise: 'Sunrise',
         Dhuhr: 'Dhuhr',
+        Jumuah: 'Jumu\'ah',
         Asr: 'Asr',
         Maghrib: 'Maghrib',
         Isha: 'Isha'
@@ -44,10 +67,18 @@ const PrayerTimesApp = () => {
       calculationMethod: 'طريقة الحساب: رابطة العالم الإسلامي',
       basedOnLocation: 'الأوقات بناءً على موقعك',
       notPrayerTime: 'ليس وقت صلاة',
+      adhanEnabled: 'الأذان مفعل',
+      adhanDisabled: 'الأذان معطل',
+      adhkar: 'الأذكار اليومية',
+      morningAdhkar: 'أذكار الصباح',
+      eveningAdhkar: 'أذكار المساء',
+      testAdhan: 'تجربة الأذان',
+      fridayPrayer: 'صلاة الجمعة',
       prayers: {
         Fajr: 'الفجر',
         Sunrise: 'الشروق',
         Dhuhr: 'الظهر',
+        Jumuah: 'الجمعة',
         Asr: 'العصر',
         Maghrib: 'المغرب',
         Isha: 'العشاء'
@@ -57,101 +88,161 @@ const PrayerTimesApp = () => {
     },
     ur: {
       dir: 'rtl',
-      prayerTimes: 'نماز کے اوقات',
-      nextPrayer: 'اگلی نماز',
+      prayerTimes: 'نماز کے اوقات', 
+      nextPrayer: 'اگلی نماز', 
       currentTime: 'موجودہ وقت',
-      loading: 'نماز کے اوقات لوڈ ہو رہے ہیں...',
+      loading: 'نماز کے اوقات لوڈ ہو رہے ہیں...', 
       refresh: 'نماز کے اوقات تازہ کریں',
-      calculationMethod: 'حساب کا طریقہ: مسلم ورلڈ لیگ',
+      calculationMethod: 'حساب کا طریقہ: مسلم ورلڈ لیگ', 
       basedOnLocation: 'اوقات آپ کے مقام پر مبنی ہیں',
-      notPrayerTime: 'نماز کا وقت نہیں',
-      prayers: {
-        Fajr: 'فجر',
-        Sunrise: 'طلوع آفتاب',
-        Dhuhr: 'ظہر',
-        Asr: 'عصر',
-        Maghrib: 'مغرب',
-        Isha: 'عشاء'
+      notPrayerTime: 'نماز کا وقت نہیں', 
+      adhanEnabled: 'اذان فعال', 
+      adhanDisabled: 'اذان غیر فعال',
+      adhkar: 'روزانہ اذکار', 
+      morningAdhkar: 'صبح کے اذکار', 
+      eveningAdhkar: 'شام کے اذکار',
+      testAdhan: 'اذان کی آزمائش',
+      fridayPrayer: 'جمعہ کی نماز',
+      prayers: { 
+        Fajr: 'فجر', 
+        Sunrise: 'طلوع آفتاب', 
+        Dhuhr: 'ظہر', 
+        Jumuah: 'جمعہ', 
+        Asr: 'عصر', 
+        Maghrib: 'مغرب', 
+        Isha: 'عشاء' 
       },
       days: ['اتوار', 'پیر', 'منگل', 'بدھ', 'جمعرات', 'جمعہ', 'ہفتہ'],
-      months: ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر']
+      months: ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نوفمبر', 'دسمبر']
     },
     tr: {
       dir: 'ltr',
-      prayerTimes: 'Namaz Vakitleri',
-      nextPrayer: 'Sonraki Namaz',
+      prayerTimes: 'Namaz Vakitleri', 
+      nextPrayer: 'Sonraki Namaz', 
       currentTime: 'Şimdiki Zaman',
-      loading: 'Namaz Vakitleri Yükleniyor...',
+      loading: 'Namaz Vakitleri Yükleniyor...', 
       refresh: 'Namaz Vakitlerini Yenile',
-      calculationMethod: 'Hesaplama Yöntemi: Müslüman Dünya Birliği',
+      calculationMethod: 'Hesaplama Yöntemi: Müslüman Dünya Birliği', 
       basedOnLocation: 'Vakitler konumunuza göre',
-      notPrayerTime: 'Namaz vakti değil',
-      prayers: {
-        Fajr: 'İmsak',
-        Sunrise: 'Güneş',
-        Dhuhr: 'Öğle',
-        Asr: 'İkindi',
-        Maghrib: 'Akşam',
-        Isha: 'Yatsı'
+      notPrayerTime: 'Namaz vakti değil', 
+      adhanEnabled: 'Ezan Açık', 
+      adhanDisabled: 'Ezan Kapalı',
+      adhkar: 'Günlük Zikirler', 
+      morningAdhkar: 'Sabah Zikirleri', 
+      eveningAdhkar: 'Akşam Zikirleri',
+      testAdhan: 'Ezanı Test Et',
+      fridayPrayer: 'Cuma Namazı',
+      prayers: { 
+        Fajr: 'İmsak', 
+        Sunrise: 'Güneş', 
+        Dhuhr: 'Öğle', 
+        Jumuah: 'Cuma', 
+        Asr: 'İkindi', 
+        Maghrib: 'Akşam', 
+        Isha: 'Yatsı' 
       },
       days: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
       months: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
     },
     ms: {
       dir: 'ltr',
-      prayerTimes: 'Waktu Solat',
-      nextPrayer: 'Solat Seterusnya',
+      prayerTimes: 'Waktu Solat', 
+      nextPrayer: 'Solat Seterusnya', 
       currentTime: 'Masa Sekarang',
-      loading: 'Memuatkan Waktu Solat...',
+      loading: 'Memuatkan Waktu Solat...', 
       refresh: 'Muat Semula Waktu Solat',
-      calculationMethod: 'Kaedah Pengiraan: Liga Dunia Islam',
+      calculationMethod: 'Kaedah Pengiraan: Liga Dunia Islam', 
       basedOnLocation: 'Waktu berdasarkan lokasi anda',
-      notPrayerTime: 'Bukan waktu solat',
-      prayers: {
-        Fajr: 'Subuh',
-        Sunrise: 'Syuruk',
-        Dhuhr: 'Zohor',
-        Asr: 'Asar',
-        Maghrib: 'Maghrib',
-        Isha: 'Isyak'
+      notPrayerTime: 'Bukan waktu solat', 
+      adhanEnabled: 'Azan ON', 
+      adhanDisabled: 'Azan OFF',
+      adhkar: 'Zikir Harian', 
+      morningAdhkar: 'Zikir Pagi', 
+      eveningAdhkar: 'Zikir Petang',
+      testAdhan: 'Uji Azan',
+      fridayPrayer: 'Solat Jumaat',
+      prayers: { 
+        Fajr: 'Subuh', 
+        Sunrise: 'Syuruk', 
+        Dhuhr: 'Zohor', 
+        Jumuah: 'Jumaat', 
+        Asr: 'Asar', 
+        Maghrib: 'Maghrib', 
+        Isha: 'Isyak' 
       },
       days: ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'],
       months: ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember']
     },
     fr: {
       dir: 'ltr',
-      prayerTimes: 'Horaires de Prière',
-      nextPrayer: 'Prochaine Prière',
+      prayerTimes: 'Horaires de Prière', 
+      nextPrayer: 'Prochaine Prière', 
       currentTime: 'Heure Actuelle',
-      loading: 'Chargement des Horaires...',
+      loading: 'Chargement des Horaires...', 
       refresh: 'Actualiser les Horaires',
-      calculationMethod: 'Méthode: Ligue Islamique Mondiale',
+      calculationMethod: 'Méthode: Ligue Islamique Mondiale', 
       basedOnLocation: 'Horaires basés sur votre position',
-      notPrayerTime: 'Pas une heure de prière',
-      prayers: {
-        Fajr: 'Fajr',
-        Sunrise: 'Lever du soleil',
-        Dhuhr: 'Dhuhr',
-        Asr: 'Asr',
-        Maghrib: 'Maghrib',
-        Isha: 'Isha'
+      notPrayerTime: 'Pas une heure de prière', 
+      adhanEnabled: 'Adhan ON', 
+      adhanDisabled: 'Adhan OFF',
+      adhkar: 'Adhkar Quotidiens', 
+      morningAdhkar: 'Adhkar du Matin', 
+      eveningAdhkar: 'Adhkar du Soir',
+      testAdhan: 'Tester l\'Adhan',
+      fridayPrayer: 'Prières du Vendredi',
+      prayers: { 
+        Fajr: 'Fajr', 
+        Sunrise: 'Lever du soleil', 
+        Dhuhr: 'Dhuhr', 
+        Jumuah: 'Jumu\'ah', 
+        Asr: 'Asr', 
+        Maghrib: 'Maghrib', 
+        Isha: 'Isha' 
       },
       days: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
       months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
     }
   };
 
+  const adhkarData = {
+    morning: [
+      { ar: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ', en: 'We have entered morning, and all sovereignty belongs to Allah' },
+      { ar: 'اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ', en: 'O Allah, by You we enter morning and evening, by You we live and die, and to You is the resurrection' },
+      { ar: 'أَصْبَحْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', en: 'We have entered morning upon the natural religion of Islam and the word of sincere devotion' },
+      { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', en: 'Glory is to Allah and praise is to Him' },
+      { ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', en: 'There is no deity but Allah alone, with no partner' },
+      { ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet' }
+    ],
+    evening: [
+      { ar: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ', en: 'We have entered evening, and all sovereignty belongs to Allah' },
+      { ar: 'اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ', en: 'O Allah, by You we enter evening and morning, by You we live and die, and to You is the final return' },
+      { ar: 'أَمْسَيْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', en: 'We have entered evening upon the natural religion of Islam and the word of sincere devotion' },
+      { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', en: 'Glory is to Allah and praise is to Him' },
+      { ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', en: 'There is no deity but Allah alone, with no partner' },
+      { ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet' }
+    ]
+  };
+
   const languages = [
-    { code: 'en', name: 'English', native: 'English' },
-    { code: 'ar', name: 'Arabic', native: 'العربية' },
-    { code: 'ur', name: 'Urdu', native: 'اردو' },
-    { code: 'tr', name: 'Turkish', native: 'Türkçe' },
-    { code: 'ms', name: 'Malay', native: 'Bahasa Melayu' },
-    { code: 'fr', name: 'French', native: 'Français' }
+    { code: 'en', native: 'English' },
+    { code: 'ar', native: 'العربية' },
+    { code: 'ur', native: 'اردو' },
+    { code: 'tr', native: 'Türkçe' },
+    { code: 'ms', native: 'Bahasa Melayu' },
+    { code: 'fr', native: 'Français' }
   ];
 
   const t = translations[language];
   const isRTL = t.dir === 'rtl';
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('prayerApp_language', language);
+  }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem('prayerApp_adhanEnabled', JSON.stringify(adhanEnabled));
+  }, [adhanEnabled]);
 
   const getCityName = useCallback(async (lat, lng) => {
     try {
@@ -159,27 +250,20 @@ const PrayerTimesApp = () => {
         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
       );
       const data = await response.json();
-      setLocation(prev => ({
-        ...prev,
-        city: data.city || data.locality || 'Unknown Location'
-      }));
+      setLocation(prev => ({ ...prev, city: data.city || data.locality || 'Unknown' }));
     } catch (error) {
-      console.error('Error getting city name:', error);
+      console.error('Error getting city:', error);
     }
   }, []);
 
   const getCurrentLocation = useCallback(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-          getCityName(position.coords.latitude, position.coords.longitude);
+        (pos) => {
+          setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          getCityName(pos.coords.latitude, pos.coords.longitude);
         },
-        (error) => {
-          console.error('Error getting location:', error);
+        () => {
           setLocation({ lat: 21.4225, lng: 39.8262, city: 'Makkah' });
           setLoading(false);
         }
@@ -189,66 +273,83 @@ const PrayerTimesApp = () => {
 
   const fetchPrayerTimes = useCallback(async () => {
     if (!location) return;
-    
     setLoading(true);
     try {
-      const date = new Date();
+      const timestamp = Math.floor(Date.now() / 1000);
       const response = await fetch(
-        `https://api.aladhan.com/v1/timings/${Math.floor(date.getTime() / 1000)}?latitude=${location.lat}&longitude=${location.lng}&method=${calculationMethod}&school=${madhab}`
+        `https://api.aladhan.com/v1/timings/${timestamp}?latitude=${location.lat}&longitude=${location.lng}&method=${calculationMethod}&school=${madhab}`
       );
       const data = await response.json();
-      
       if (data.code === 200) {
         setPrayerTimes(data.data.timings);
+        // Get Hijri date from API response
+        const hijri = data.data.date.hijri;
+        setHijriDate({
+          day: hijri.day,
+          month: hijri.month.en,
+          year: hijri.year,
+          monthAr: hijri.month.ar
+        });
       }
     } catch (error) {
-      console.error('Error fetching prayer times:', error);
+      console.error('Error fetching times:', error);
     }
     setLoading(false);
   }, [location]);
 
+  const playAdhan = useCallback((isTest = false) => {
+    if (!adhanEnabled && !isTest) return;
+    const audio = new Audio('/prayertimes/adhan.mp3');
+    audio.play().catch(err => {
+      console.log('Adhan playback failed:', err);
+    });
+  }, [adhanEnabled]);
+
+  const testAdhan = () => {
+    playAdhan(true);
+  };
+
   const calculateNextPrayer = useCallback(() => {
     if (!prayerTimes) return;
-
     const now = currentTime;
     const prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    const isFriday = now.getDay() === 5;
     
     for (let prayer of prayers) {
-      const [hours, minutes] = prayerTimes[prayer].split(':');
+      const [h, m] = prayerTimes[prayer].split(':');
       const prayerTime = new Date(now);
-      prayerTime.setHours(parseInt(hours), parseInt(minutes), 0);
+      prayerTime.setHours(parseInt(h), parseInt(m), 0);
+
+      if (Math.abs(prayerTime - now) < 60000) playAdhan();
 
       if (prayerTime > now) {
         const diff = prayerTime - now;
-        const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
-        const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const secondsLeft = Math.floor((diff % (1000 * 60)) / 1000);
+        const hoursLeft = Math.floor(diff / 3600000);
+        const minutesLeft = Math.floor((diff % 3600000) / 60000);
+        const secondsLeft = Math.floor((diff % 60000) / 1000);
         
-        setNextPrayer({
-          name: prayer,
-          time: prayerTimes[prayer],
-          timeLeft: `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`
+        const displayName = (prayer === 'Dhuhr' && isFriday) ? 'Jumuah' : prayer;
+        
+        setNextPrayer({ 
+          name: displayName, 
+          time: prayerTimes[prayer], 
+          timeLeft: `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s` 
         });
         return;
       }
     }
-
-    const [hours, minutes] = prayerTimes.Fajr.split(':');
-    const fajrTomorrow = new Date(now);
-    fajrTomorrow.setDate(fajrTomorrow.getDate() + 1);
-    fajrTomorrow.setHours(parseInt(hours), parseInt(minutes), 0);
     
-    const diff = fajrTomorrow - now;
-    const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
-    const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const secondsLeft = Math.floor((diff % (1000 * 60)) / 1000);
-    
+    const [h, m] = prayerTimes.Fajr.split(':');
+    const fajr = new Date(now);
+    fajr.setDate(fajr.getDate() + 1);
+    fajr.setHours(parseInt(h), parseInt(m), 0);
+    const diff = fajr - now;
     setNextPrayer({
       name: 'Fajr',
       time: prayerTimes.Fajr,
-      timeLeft: `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`
+      timeLeft: `${Math.floor(diff / 3600000)}h ${Math.floor((diff % 3600000) / 60000)}m ${Math.floor((diff % 60000) / 1000)}s`
     });
-  }, [prayerTimes, currentTime]);
+  }, [prayerTimes, currentTime, playAdhan]);
 
   useEffect(() => {
     getCurrentLocation();
@@ -257,35 +358,49 @@ const PrayerTimesApp = () => {
   }, [getCurrentLocation]);
 
   useEffect(() => {
-    if (location) {
-      fetchPrayerTimes();
-    }
+    if (location) fetchPrayerTimes();
   }, [location, fetchPrayerTimes]);
 
   useEffect(() => {
-    if (prayerTimes) {
-      calculateNextPrayer();
-    }
+    if (prayerTimes) calculateNextPrayer();
   }, [prayerTimes, currentTime, calculateNextPrayer]);
 
-  const formatTime12Hour = (time24) => {
-    const [hours, minutes] = time24.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
+  // Improved time formatting with Arabic support
+  const formatTime = (time24) => {
+    const [h, m] = time24.split(':');
+    const hour = parseInt(h);
+    
+    if (language === 'ar') {
+      // Arabic: Use ص for morning (AM) and م for evening (PM)
+      const isPM = hour >= 12;
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${m} ${isPM ? 'م' : 'ص'}`;
+    } else if (language === 'ur') {
+      // Urdu: Use شام for evening and صبح for morning
+      const isPM = hour >= 12;
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${m} ${isPM ? 'شام' : 'صبح'}`;
+    } else {
+      // Other languages: Use standard AM/PM
+      return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+    }
   };
 
   const formatDate = (date) => {
-    const dayName = t.days[date.getDay()];
-    const monthName = t.months[date.getMonth()];
-    const day = date.getDate();
-    const year = date.getFullYear();
-    
-    if (isRTL) {
-      return `${dayName}، ${day} ${monthName} ${year}`;
-    }
-    return `${dayName}, ${monthName} ${day}, ${year}`;
+    const day = t.days[date.getDay()];
+    const month = t.months[date.getMonth()];
+    return isRTL ? `${day}، ${date.getDate()} ${month} ${date.getFullYear()}` : `${day}, ${month} ${date.getDate()}, ${date.getFullYear()}`;
+  };
+
+  // Toggle functions that update both state and localStorage
+  const toggleLanguage = (langCode) => {
+    setLanguage(langCode);
+    setShowLanguageMenu(false);
+  };
+
+  const toggleAdhan = () => {
+    const newValue = !adhanEnabled;
+    setAdhanEnabled(newValue);
   };
 
   if (loading || !prayerTimes) {
@@ -300,39 +415,54 @@ const PrayerTimesApp = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 pb-20" dir={t.dir}>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 pb-24" dir={t.dir}>
+      {/* Adhkar Modal */}
+      {showAdhkar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className={`bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto ${isRTL ? 'text-right' : 'text-left'}`}>
+            <div className="sticky top-0 bg-emerald-600 text-white p-6 rounded-t-2xl flex items-center justify-between">
+              <h2 className="text-2xl font-bold">{adhkarType === 'morning' ? t.morningAdhkar : t.eveningAdhkar}</h2>
+              <button onClick={() => setShowAdhkar(false)} className="p-2 hover:bg-emerald-700 rounded-lg">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              {adhkarData[adhkarType].map((adhkar, i) => (
+                <div key={i} className="bg-emerald-50 rounded-xl p-6 border-l-4 border-emerald-600">
+                  <p className="text-2xl text-gray-800 mb-4 leading-relaxed font-arabic" style={{fontFamily: 'Traditional Arabic, serif'}}>{adhkar.ar}</p>
+                  <p className="text-gray-600 leading-relaxed">{adhkar.en}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-800 to-teal-700 shadow-lg">
         <div className="max-w-md mx-auto px-6 py-6">
-          <div className={`flex items-center justify-between mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <Moon className="w-8 h-8 text-amber-300" />
+          <div className={`flex items-center justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Moon className="w-9 h-9 text-amber-300" />
               <h1 className="text-2xl font-bold text-white">{t.prayerTimes}</h1>
             </div>
-            <div className="relative">
-              <button
-                onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                className="p-2 hover:bg-emerald-700 rounded-lg transition-colors"
+            <div className="flex gap-2 relative">
+              <button 
+                onClick={() => setShowLanguageMenu(!showLanguageMenu)} 
+                className="p-2.5 hover:bg-emerald-700 rounded-xl transition-colors bg-emerald-800/50"
+                aria-label="Change language"
               >
-                <Globe className="w-6 h-6 text-amber-200" />
+                <Globe className="w-5 h-5 text-amber-200" />
               </button>
-              
               {showLanguageMenu && (
-                <div className={`absolute top-12 ${isRTL ? 'left-0' : 'right-0'} bg-white rounded-lg shadow-xl z-50 w-48`}>
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => {
-                        setLanguage(lang.code);
-                        setShowLanguageMenu(false);
-                      }}
-                      className={`w-full px-4 py-3 text-left hover:bg-emerald-50 transition-colors ${
-                        language === lang.code ? 'bg-emerald-100 font-semibold' : ''
-                      } ${lang.code === 'en' ? 'rounded-t-lg' : ''} ${
-                        lang.code === 'fr' ? 'rounded-b-lg' : ''
-                      }`}
+                <div className={`absolute top-12 ${isRTL ? 'left-0' : 'right-0'} bg-white rounded-xl shadow-xl z-50 w-48 border border-emerald-100 py-1`}>
+                  {languages.map((lang, i) => (
+                    <button 
+                      key={lang.code} 
+                      onClick={() => toggleLanguage(lang.code)}
+                      className={`w-full px-4 py-3 hover:bg-emerald-50 transition-colors text-left ${isRTL ? 'text-right' : ''} ${language === lang.code ? 'bg-emerald-100 font-semibold text-emerald-800' : 'text-gray-700'} ${i === 0 ? 'rounded-t-xl' : ''} ${i === languages.length - 1 ? 'rounded-b-xl' : ''}`}
                     >
-                      <div className="text-sm text-gray-800">{lang.native}</div>
+                      {lang.native}
                     </button>
                   ))}
                 </div>
@@ -340,114 +470,165 @@ const PrayerTimesApp = () => {
             </div>
           </div>
           
-          <div className={`flex items-center gap-2 text-emerald-100 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm">{location?.city || 'Locating...'}</span>
-          </div>
+          {/* Hijri Date - Prominent display */}
+          {hijriDate && (
+            <div className={`flex items-center justify-center gap-3 bg-amber-900/30 backdrop-blur-sm py-3 px-4 rounded-xl mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Moon className="w-5 h-5 text-amber-300" />
+              <span className="text-lg font-bold text-amber-200 text-center">
+                {isRTL 
+                  ? `${hijriDate.day} ${hijriDate.monthAr} ${hijriDate.year} هـ`
+                  : `${hijriDate.day} ${hijriDate.month} ${hijriDate.year} AH`
+                }
+              </span>
+            </div>
+          )}
           
-          <div className={`flex items-center gap-2 text-emerald-100 mt-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm">{formatDate(currentTime)}</span>
+          {/* Location and Gregorian Date */}
+          <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <MapPin className="w-4 h-4 text-emerald-200" />
+              <span className="text-emerald-100 text-sm">{location?.city}</span>
+            </div>
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Calendar className="w-4 h-4 text-emerald-200" />
+              <span className="text-emerald-100 text-sm">{formatDate(currentTime)}</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-6 py-6">
-        {/* Next Prayer Card */}
+        {/* Current Time - Modern Design */}
+        <div className="text-center mb-6">
+          <p className="text-emerald-100 text-sm mb-2 font-medium">{t.currentTime}</p>
+          <div className="bg-gradient-to-r from-emerald-800/40 to-teal-800/40 backdrop-blur-sm py-4 px-6 rounded-2xl border border-emerald-700/30">
+            <p className="text-white text-3xl font-bold font-mono tracking-wide">
+              {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </p>
+          </div>
+        </div>
+
+        {/* Adhkar Buttons - Moved to Top */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button 
+            onClick={() => { setAdhkarType('morning'); setShowAdhkar(true); }}
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <Sun className="w-6 h-6" />
+            <span className="text-xs font-semibold">{t.morningAdhkar}</span>
+          </button>
+          <button 
+            onClick={() => { setAdhkarType('evening'); setShowAdhkar(true); }}
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <Book className="w-6 h-6" />
+            <span className="text-xs font-semibold">{t.eveningAdhkar}</span>
+          </button>
+        </div>
+
+        {/* Next Prayer - Clean Design */}
         {nextPrayer && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-2 border-amber-400">
+          <div className="bg-gradient-to-r from-emerald-700 to-teal-700 rounded-2xl shadow-xl p-5 mb-6 relative overflow-hidden border border-emerald-600">
             <div className="text-center">
-              <p className="text-gray-600 text-sm mb-1">{t.nextPrayer}</p>
-              <h2 className="text-3xl font-bold text-emerald-800 mb-2">
-                {t.prayers[nextPrayer.name]}
-              </h2>
-              <div className="text-4xl font-bold text-teal-600 mb-3">
-                {formatTime12Hour(nextPrayer.time)}
-              </div>
-              <div className={`flex items-center justify-center gap-2 text-amber-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Clock className="w-5 h-5" />
-                <span className="text-lg font-semibold">{nextPrayer.timeLeft}</span>
+              <p className="text-emerald-100 text-xs mb-1 font-medium tracking-wider">{t.nextPrayer}</p>
+              <h2 className="text-3xl font-bold text-white mb-2">{t.prayers[nextPrayer.name]}</h2>
+              <div className="text-4xl font-bold text-amber-300 mb-3 font-mono">{formatTime(nextPrayer.time)}</div>
+              <div className={`flex items-center justify-center gap-2 text-emerald-100 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Clock className="w-4 h-4" />
+                <span className="text-base font-semibold bg-emerald-800/40 py-1.5 px-3 rounded-full">{nextPrayer.timeLeft}</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Current Time */}
-        <div className="text-center mb-6">
-          <p className="text-emerald-100 text-sm mb-1">{t.currentTime}</p>
-          <p className="text-white text-2xl font-semibold">
-            {currentTime.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit', 
-              second: '2-digit' 
-            })}
-          </p>
-        </div>
-
-        {/* Prayer Times List */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          {['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayer, index) => {
-            const isNext = nextPrayer?.name === prayer;
+        {/* Prayer Times - Clean Table */}
+        <div className="bg-white/95 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm mb-6">
+          {['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayer, i) => {
+            const isFriday = currentTime.getDay() === 5;
+            const displayPrayer = (prayer === 'Dhuhr' && isFriday) ? 'Jumuah' : prayer;
+            const isNext = nextPrayer?.name === displayPrayer;
+            const isEveningPrayer = ['Maghrib', 'Isha'].includes(prayer);
             
             return (
-              <div
-                key={prayer}
-                className={`flex items-center justify-between p-5 ${
-                  index !== 5 ? 'border-b border-gray-100' : ''
-                } ${isNext ? 'bg-emerald-50' : 'hover:bg-gray-50'} transition-colors ${
-                  isRTL ? 'flex-row-reverse' : ''
-                }`}
+              <div 
+                key={prayer} 
+                className={`flex items-center justify-between p-4 transition-all duration-200 ${i !== 5 ? 'border-b border-gray-100' : ''} ${isNext ? 'bg-gradient-to-r from-emerald-50 to-teal-50' : 'hover:bg-gray-50'}`}
               >
-                <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    isNext 
-                      ? 'bg-emerald-100' 
-                      : prayer === 'Sunrise' 
-                      ? 'bg-amber-100' 
-                      : 'bg-teal-100'
-                  }`}>
+                <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isNext ? 'bg-emerald-100 text-emerald-600' : isEveningPrayer ? 'bg-purple-100 text-purple-600' : prayer === 'Sunrise' ? 'bg-amber-100 text-amber-600' : 'bg-teal-100 text-teal-600'}`}>
                     {prayer === 'Sunrise' ? (
-                      <Sun className={`w-6 h-6 ${isNext ? 'text-emerald-600' : 'text-amber-600'}`} />
+                      <Sun className="w-5 h-5" />
                     ) : (
-                      <Moon className={`w-6 h-6 ${isNext ? 'text-emerald-600' : 'text-teal-600'}`} />
+                      <Moon className="w-5 h-5" />
                     )}
                   </div>
-                  <div className={isRTL ? 'text-right' : 'text-left'}>
-                    <h3 className={`text-lg font-semibold ${
-                      isNext ? 'text-emerald-800' : 'text-gray-800'
-                    }`}>
-                      {t.prayers[prayer]}
-                    </h3>
+                  <div className={isRTL ? 'text-right' : ''}>
+                    <div className="flex items-center gap-2">
+                      <h3 className={`text-base font-semibold ${isNext ? 'text-emerald-800' : 'text-gray-800'}`}>
+                        {t.prayers[displayPrayer]}
+                      </h3>
+                      {prayer === 'Dhuhr' && isFriday && (
+                        <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">
+                          {t.fridayPrayer}
+                        </span>
+                      )}
+                    </div>
                     {prayer === 'Sunrise' && (
-                      <p className="text-xs text-gray-500">{t.notPrayerTime}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t.notPrayerTime}</p>
                     )}
                   </div>
                 </div>
-                <div className={`text-xl font-bold ${
-                  isNext ? 'text-emerald-600' : 'text-gray-700'
-                }`}>
-                  {formatTime12Hour(prayerTimes[prayer])}
+                <div className={`text-lg font-bold ${isNext ? 'text-emerald-600' : 'text-gray-700'} ${language === 'ar' ? 'font-arabic' : 'font-mono'}`}>
+                  {formatTime(prayerTimes[prayer])}
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Refresh Button */}
-        <button
-          onClick={fetchPrayerTimes}
-          className={`w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
-            isRTL ? 'flex-row-reverse' : ''
-          }`}
-        >
-          <Settings className="w-5 h-5" />
-          {t.refresh}
-        </button>
+        {/* Footer with Adhan Settings and Refresh */}
+        <div className="mt-6 pt-6 border-t border-emerald-700/30">
+          {/* Adhan Settings */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <button 
+              onClick={toggleAdhan}
+              className={`p-3 rounded-xl shadow-lg flex flex-col items-center gap-1.5 transition-all transform hover:-translate-y-0.5 active:translate-y-0 ${adhanEnabled ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white' : 'bg-white/95 text-gray-700'}`}
+            >
+              {adhanEnabled ? (
+                <>
+                  <Volume2 className="w-5 h-5" />
+                  <span className="text-xs font-semibold">{t.adhanEnabled}</span>
+                </>
+              ) : (
+                <>
+                  <VolumeX className="w-5 h-5" />
+                  <span className="text-xs font-semibold">{t.adhanDisabled}</span>
+                </>
+              )}
+            </button>
+            <button 
+              onClick={testAdhan}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-3 rounded-xl shadow-lg flex flex-col items-center gap-1.5 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <Volume2 className="w-5 h-5" />
+              <span className="text-xs font-semibold">{t.testAdhan}</span>
+            </button>
+          </div>
 
-        {/* Footer Info */}
-        <div className="text-center mt-6 text-emerald-100 text-sm">
-          <p>{t.calculationMethod}</p>
-          <p className="mt-1">{t.basedOnLocation}</p>
+          {/* Refresh Button */}
+          <button 
+            onClick={fetchPrayerTimes}
+            className={`w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Settings className="w-4 h-4" />
+            <span className="text-sm">{t.refresh}</span>
+          </button>
+
+          {/* Footer Info */}
+          <div className="text-center mt-4 text-emerald-100/70 text-xs">
+            <p className="mb-0.5">{t.calculationMethod}</p>
+            <p>{t.basedOnLocation}</p>
+          </div>
         </div>
       </div>
     </div>
