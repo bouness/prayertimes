@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "name": "Prayer Times (Ads Free)",
+  "short_name": "Prayer Times (Ads Free)",
+  "description": "Accurate worldwide Prayer Times (Ads Free)",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,7 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#047857",
+  "background_color": "#047857",
+  "orientation": "portrait"
 }
