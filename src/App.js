@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Moon, Sun, MapPin, Calendar, Settings, Clock, Globe, Volume2, VolumeX, Book, X } from 'lucide-react';
 
 const PrayerTimesApp = () => {
@@ -12,6 +12,8 @@ const PrayerTimesApp = () => {
   const [showAdhkar, setShowAdhkar] = useState(false);
   const [adhkarType, setAdhkarType] = useState('morning');
   const [hijriDate, setHijriDate] = useState(null);
+  const [lastAdhanPlayed, setLastAdhanPlayed] = useState(null);
+  const [isTestingAdhan, setIsTestingAdhan] = useState(false);
   
   // Settings with localStorage persistence
   const [language, setLanguage] = useState(() => {
@@ -26,6 +28,19 @@ const PrayerTimesApp = () => {
   
   const calculationMethod = 2;
   const madhab = 0;
+
+  // Use ref to keep track of audio instance
+  const audioRef = useRef(null);
+
+  // Clean up audio on component unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   const translations = {
     en: {
@@ -44,6 +59,7 @@ const PrayerTimesApp = () => {
       morningAdhkar: 'Morning Adhkar',
       eveningAdhkar: 'Evening Adhkar',
       testAdhan: 'Test Adhan',
+      testAdhanPlaying: 'Stop Adhan',
       fridayPrayer: 'Friday Prayer',
       prayers: {
         Fajr: 'Fajr',
@@ -74,6 +90,7 @@ const PrayerTimesApp = () => {
       morningAdhkar: 'أذكار الصباح',
       eveningAdhkar: 'أذكار المساء',
       testAdhan: 'تجربة الأذان',
+      testAdhanPlaying: 'إيقاف الأذان',
       fridayPrayer: 'صلاة الجمعة',
       prayers: {
         Fajr: 'الفجر',
@@ -104,6 +121,7 @@ const PrayerTimesApp = () => {
       morningAdhkar: 'صبح کے اذکار', 
       eveningAdhkar: 'شام کے اذکار',
       testAdhan: 'اذان کی آزمائش',
+      testAdhanPlaying: 'اذان بند کریں',
       fridayPrayer: 'جمعہ کی نماز',
       prayers: { 
         Fajr: 'فجر', 
@@ -134,6 +152,7 @@ const PrayerTimesApp = () => {
       morningAdhkar: 'Sabah Zikirleri', 
       eveningAdhkar: 'Akşam Zikirleri',
       testAdhan: 'Ezanı Test Et',
+      testAdhanPlaying: 'Ezanı Durdur',
       fridayPrayer: 'Cuma Namazı',
       prayers: { 
         Fajr: 'İmsak', 
@@ -164,6 +183,7 @@ const PrayerTimesApp = () => {
       morningAdhkar: 'Zikir Pagi', 
       eveningAdhkar: 'Zikir Petang',
       testAdhan: 'Uji Azan',
+      testAdhanPlaying: 'Hentikan Azan',
       fridayPrayer: 'Solat Jumaat',
       prayers: { 
         Fajr: 'Subuh', 
@@ -194,6 +214,7 @@ const PrayerTimesApp = () => {
       morningAdhkar: 'Adhkar du Matin', 
       eveningAdhkar: 'Adhkar du Soir',
       testAdhan: 'Tester l\'Adhan',
+      testAdhanPlaying: 'Arrêter l\'Adhan',
       fridayPrayer: 'Prières du Vendredi',
       prayers: { 
         Fajr: 'Fajr', 
@@ -210,117 +231,32 @@ const PrayerTimesApp = () => {
     }
   };
 
-  // Updated Adhkar data with translations for all languages
   const adhkarData = {
     morning: [
-      { 
-        ar: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ', 
-        en: 'We have entered morning, and all sovereignty belongs to Allah',
-        ur: 'ہم نے صبح کی اور تمام بادشاہی اللہ کی ہے',
-        tr: 'Sabaha girdik ve tüm egemenlik Allah\'ındır',
-        ms: 'Kami telah memasuki pagi, dan segala kedaulatan adalah milik Allah',
-        fr: 'Nous avons entré le matin, et toute souveraineté appartient à Allah'
-      },
-      { 
-        ar: 'اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ', 
-        en: 'O Allah, by You we enter morning and evening, by You we live and die, and to You is the resurrection',
-        ur: 'اے اللہ! تیرے ذریعے ہم صبح اور شام کو پہنچتے ہیں، تیرے ذریعے ہم جیتے اور مرتے ہیں، اور تیری طرف ہی پلٹ کر جانا ہے',
-        tr: 'Allah\'ım, seninle sabaha ereriz, seninle akşama ereriz, seninle yaşarız, seninle ölürüz ve dönüş sanadır',
-        ms: 'Ya Allah, dengan Engkau kami masuk pagi dan petang, dengan Engkau kami hidup dan mati, dan kepada Engkaulah kebangkitan',
-        fr: 'Ô Allah, par Toi nous entrons le matin et le soir, par Toi nous vivons et mourons, et vers Toi est la résurrection'
-      },
-      { 
-        ar: 'أَصْبَحْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', 
-        en: 'We have entered morning upon the natural religion of Islam and the word of sincere devotion',
-        ur: 'ہم نے صبح کی اسلام کی فطرت اور اخلاص کے کلمے پر',
-        tr: 'Sabaha İslam\'ın fıtratı ve ihlas kelimesi üzere girdik',
-        ms: 'Kami telah memasuki pagi atas fitrah Islam dan kalimah ikhlas',
-        fr: 'Nous avons entré le matin sur la religion naturelle de l\'Islam et la parole de sincère dévotion'
-      },
-      { 
-        ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', 
-        en: 'Glory is to Allah and praise is to Him',
-        ur: 'اللہ پاک ہے اور اس کی حمد ہے',
-        tr: 'Allah\'ı tesbih ederim ve O\'na hamd ederim',
-        ms: 'Maha Suci Allah dan segala puji bagi-Nya',
-        fr: 'Gloire à Allah et louange à Lui'
-      },
-      { 
-        ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', 
-        en: 'There is no deity but Allah alone, with no partner',
-        ur: 'اللہ کے سوا کوئی معبود نہیں، وہ اکیلا ہے، اس کا کوئی شریک نہیں',
-        tr: 'Allah\'tan başka ilah yoktur, O birdir, ortağı yoktur',
-        ms: 'Tiada tuhan melainkan Allah yang Maha Esa, tiada sekutu bagi-Nya',
-        fr: 'Il n\'y a de divinité qu\'Allah seul, sans associé'
-      },
-      { 
-        ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', 
-        en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet',
-        ur: 'میں اللہ کو اپنا رب، اسلام کو اپنا دین اور محمد صلی اللہ علیہ وسلم کو اپنا نبی مان کر راضی ہوں',
-        tr: 'Allah\'ı Rab, İslam\'ı din ve Muhammed\'i peygamber olarak razı oldum',
-        ms: 'Aku redha dengan Allah sebagai Tuhanku, Islam sebagai agamaku, dan Muhammad sebagai Nabiku',
-        fr: 'Je suis satisfait d\'Allah comme Seigneur, de l\'Islam comme religion, et de Muhammad comme Prophète'
-      }
+      { ar: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ', en: 'We have entered morning, and all sovereignty belongs to Allah' },
+      { ar: 'اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ', en: 'O Allah, by You we enter morning and evening, by You we live and die, and to You is the resurrection' },
+      { ar: 'أَصْبَحْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', en: 'We have entered morning upon the natural religion of Islam and the word of sincere devotion' },
+      { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', en: 'Glory is to Allah and praise is to Him' },
+      { ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', en: 'There is no deity but Allah alone, with no partner' },
+      { ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet' }
     ],
     evening: [
-      { 
-        ar: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ', 
-        en: 'We have entered evening, and all sovereignty belongs to Allah',
-        ur: 'ہم نے شام کی اور تمام بادشاہی اللہ کی ہے',
-        tr: 'Akşama girdik ve tüm egemenlik Allah\'ındır',
-        ms: 'Kami telah memasuki petang, dan segala kedaulatan adalah milik Allah',
-        fr: 'Nous avons entré le soir, et toute souveraineté appartient à Allah'
-      },
-      { 
-        ar: 'اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ', 
-        en: 'O Allah, by You we enter evening and morning, by You we live and die, and to You is the final return',
-        ur: 'اے اللہ! تیرے ذریعے ہم شام اور صبح کو پہنچتے ہیں، تیرے ذریعے ہم جیتے اور مرتے ہیں، اور تیری طرف ہی پلٹ کر جانا ہے',
-        tr: 'Allah\'ım, seninle akşama ereriz, seninle sabaha ereriz, seninle yaşarız, seninle ölürüz ve dönüş sanadır',
-        ms: 'Ya Allah, dengan Engkau kami masuk petang dan pagi, dengan Engkau kami hidup dan mati, dan kepada Engkaulah tempat kembali',
-        fr: 'Ô Allah, par Toi nous entrons le soir et le matin, par Toi nous vivons et mourons, et vers Toi est le retour final'
-      },
-      { 
-        ar: 'أَمْسَيْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', 
-        en: 'We have entered evening upon the natural religion of Islam and the word of sincere devotion',
-        ur: 'ہم نے شام کی اسلام کی فطرت اور اخلاص کے کلمے پر',
-        tr: 'Akşama İslam\'ın fıtratı ve ihlas kelimesi üzere girdik',
-        ms: 'Kami telah memasuki petang atas fitrah Islam dan kalimah ikhlas',
-        fr: 'Nous avons entré le soir sur la religion naturelle de l\'Islam et la parole de sincère dévotion'
-      },
-      { 
-        ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', 
-        en: 'Glory is to Allah and praise is to Him',
-        ur: 'اللہ پاک ہے اور اس کی حمد ہے',
-        tr: 'Allah\'ı tesbih ederim ve O\'na hamd ederim',
-        ms: 'Maha Suci Allah dan segala puji bagi-Nya',
-        fr: 'Gloire à Allah et louange à Lui'
-      },
-      { 
-        ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', 
-        en: 'There is no deity but Allah alone, with no partner',
-        ur: 'اللہ کے سوا کوئی معبود نہیں، وہ اکیلا ہے، اس کا کوئی شریک نہیں',
-        tr: 'Allah\'tan başka ilah yoktur, O birdir, ortağı yoktur',
-        ms: 'Tiada tuhan melainkan Allah yang Maha Esa, tiada sekutu bagi-Nya',
-        fr: 'Il n\'y a de divinité qu\'Allah seul, sans associé'
-      },
-      { 
-        ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', 
-        en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet',
-        ur: 'میں اللہ کو اپنا رب، اسلام کو اپنا دین اور محمد صلی اللہ علیہ وسلم کو اپنا نبی مان کر راضی ہوں',
-        tr: 'Allah\'ı Rab, İslam\'ı din ve Muhammed\'i peygamber olarak razı oldum',
-        ms: 'Aku redha dengan Allah sebagai Tuhanku, Islam sebagai agamaku, dan Muhammad sebagai Nabiku',
-        fr: 'Je suis satisfait d\'Allah comme Seigneur, de l\'Islam comme religion, et de Muhammad comme Prophète'
-      }
+      { ar: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ', en: 'We have entered evening, and all sovereignty belongs to Allah' },
+      { ar: 'اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ', en: 'O Allah, by You we enter evening and morning, by You we live and die, and to You is the final return' },
+      { ar: 'أَمْسَيْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', en: 'We have entered evening upon the natural religion of Islam and the word of sincere devotion' },
+      { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', en: 'Glory is to Allah and praise is to Him' },
+      { ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', en: 'There is no deity but Allah alone, with no partner' },
+      { ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet' }
     ]
   };
 
   const languages = [
-    { code: 'en', native: 'English' },
     { code: 'ar', native: 'العربية' },
     { code: 'ur', native: 'اردو' },
-    { code: 'tr', native: 'Türkçe' },
-    { code: 'ms', native: 'Bahasa Melayu' },
-    { code: 'fr', native: 'Français' }
+    { code: 'en', native: 'English' },
+    { code: 'fr', native: 'Français' },
+    { code: 'ms', native: 'Malay' },
+    { code: 'tr', native: 'Türkçe' }
   ];
 
   const t = translations[language];
@@ -388,16 +324,56 @@ const PrayerTimesApp = () => {
     setLoading(false);
   }, [location]);
 
-  const playAdhan = useCallback((isTest = false) => {
-    if (!adhanEnabled && !isTest) return;
+  // Function to play regular adhan (for prayer times)
+  const playRegularAdhan = useCallback(() => {
+    if (!adhanEnabled) return;
+    
     const audio = new Audio('/prayertimes/adhan.mp3');
     audio.play().catch(err => {
       console.log('Adhan playback failed:', err);
     });
   }, [adhanEnabled]);
 
+  // Function to toggle test adhan
+  const toggleTestAdhan = useCallback(() => {
+    if (isTestingAdhan) {
+      // Stop the adhan
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      }
+      setIsTestingAdhan(false);
+    } else {
+      // Start playing the adhan
+      const audio = new Audio('/prayertimes/adhan.mp3');
+      audioRef.current = audio;
+      
+      audio.play().catch(err => {
+        console.log('Adhan playback failed:', err);
+        setIsTestingAdhan(false);
+        audioRef.current = null;
+      });
+      
+      setIsTestingAdhan(true);
+      
+      // Reset when audio ends naturally
+      audio.onended = () => {
+        setIsTestingAdhan(false);
+        audioRef.current = null;
+      };
+      
+      // Also reset on error
+      audio.onerror = () => {
+        setIsTestingAdhan(false);
+        audioRef.current = null;
+      };
+    }
+  }, [isTestingAdhan]);
+
+  // Separate function for test adhan button
   const testAdhan = () => {
-    playAdhan(true);
+    toggleTestAdhan();
   };
 
   const calculateNextPrayer = useCallback(() => {
@@ -411,7 +387,26 @@ const PrayerTimesApp = () => {
       const prayerTime = new Date(now);
       prayerTime.setHours(parseInt(h), parseInt(m), 0);
 
-      if (Math.abs(prayerTime - now) < 60000) playAdhan();
+      // Check if it's time for adhan (within 30 seconds of prayer time)
+      const timeDiff = Math.abs(prayerTime - now);
+      if (timeDiff < 30000) { // 30 seconds window
+        // Create a unique key for this prayer on this date
+        const today = now.toDateString();
+        const adhanKey = `${today}-${prayer}`;
+        
+        // Only play if we haven't played for this prayer today
+        if (lastAdhanPlayed !== adhanKey) {
+          playRegularAdhan(); // Use the regular adhan function
+          setLastAdhanPlayed(adhanKey);
+          
+          // Reset after midnight (optional safety)
+          setTimeout(() => {
+            if (new Date().getDate() !== now.getDate()) {
+              setLastAdhanPlayed(null);
+            }
+          }, 60000); // Check after 1 minute
+        }
+      }
 
       if (prayerTime > now) {
         const diff = prayerTime - now;
@@ -440,7 +435,7 @@ const PrayerTimesApp = () => {
       time: prayerTimes.Fajr,
       timeLeft: `${Math.floor(diff / 3600000)}h ${Math.floor((diff % 3600000) / 60000)}m ${Math.floor((diff % 60000) / 1000)}s`
     });
-  }, [prayerTimes, currentTime, playAdhan]);
+  }, [prayerTimes, currentTime, playRegularAdhan, lastAdhanPlayed]);
 
   useEffect(() => {
     getCurrentLocation();
@@ -730,10 +725,19 @@ const PrayerTimesApp = () => {
             </button>
             <button 
               onClick={testAdhan}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-3 rounded-xl shadow-lg flex flex-col items-center gap-1.5 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              className={`p-3 rounded-xl shadow-lg flex flex-col items-center gap-1.5 transition-all transform hover:-translate-y-0.5 active:translate-y-0 ${isTestingAdhan ? 'bg-gradient-to-r from-pink-600 to-red-600 text-white' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'}`}
             >
-              <Volume2 className="w-5 h-5" />
-              <span className="text-xs font-semibold">{t.testAdhan}</span>
+              {isTestingAdhan ? (
+                <>
+                  <VolumeX className="w-5 h-5" />
+                  <span className="text-xs font-semibold">{t.testAdhanPlaying}</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-5 h-5" />
+                  <span className="text-xs font-semibold">{t.testAdhan}</span>
+                </>
+              )}
             </button>
           </div>
 
