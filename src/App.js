@@ -54,6 +54,7 @@ const PrayerTimesApp = () => {
         Maghrib: 'Maghrib',
         Isha: 'Isha'
       },
+      translation: 'Translation',
       days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
       months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     },
@@ -83,6 +84,7 @@ const PrayerTimesApp = () => {
         Maghrib: 'المغرب',
         Isha: 'العشاء'
       },
+      translation: 'ترجمة',
       days: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
       months: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
     },
@@ -112,6 +114,7 @@ const PrayerTimesApp = () => {
         Maghrib: 'مغرب', 
         Isha: 'عشاء' 
       },
+      translation: 'ترجمہ',
       days: ['اتوار', 'پیر', 'منگل', 'بدھ', 'جمعرات', 'جمعہ', 'ہفتہ'],
       months: ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نوفمبر', 'دسمبر']
     },
@@ -141,6 +144,7 @@ const PrayerTimesApp = () => {
         Maghrib: 'Akşam', 
         Isha: 'Yatsı' 
       },
+      translation: 'Çeviri',
       days: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
       months: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
     },
@@ -170,6 +174,7 @@ const PrayerTimesApp = () => {
         Maghrib: 'Maghrib', 
         Isha: 'Isyak' 
       },
+      translation: 'Terjemahan',
       days: ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'],
       months: ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember']
     },
@@ -199,27 +204,113 @@ const PrayerTimesApp = () => {
         Maghrib: 'Maghrib', 
         Isha: 'Isha' 
       },
+      translation: 'Traduction',
       days: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
       months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
     }
   };
 
+  // Updated Adhkar data with translations for all languages
   const adhkarData = {
     morning: [
-      { ar: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ', en: 'We have entered morning, and all sovereignty belongs to Allah' },
-      { ar: 'اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ', en: 'O Allah, by You we enter morning and evening, by You we live and die, and to You is the resurrection' },
-      { ar: 'أَصْبَحْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', en: 'We have entered morning upon the natural religion of Islam and the word of sincere devotion' },
-      { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', en: 'Glory is to Allah and praise is to Him' },
-      { ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', en: 'There is no deity but Allah alone, with no partner' },
-      { ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet' }
+      { 
+        ar: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ', 
+        en: 'We have entered morning, and all sovereignty belongs to Allah',
+        ur: 'ہم نے صبح کی اور تمام بادشاہی اللہ کی ہے',
+        tr: 'Sabaha girdik ve tüm egemenlik Allah\'ındır',
+        ms: 'Kami telah memasuki pagi, dan segala kedaulatan adalah milik Allah',
+        fr: 'Nous avons entré le matin, et toute souveraineté appartient à Allah'
+      },
+      { 
+        ar: 'اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ', 
+        en: 'O Allah, by You we enter morning and evening, by You we live and die, and to You is the resurrection',
+        ur: 'اے اللہ! تیرے ذریعے ہم صبح اور شام کو پہنچتے ہیں، تیرے ذریعے ہم جیتے اور مرتے ہیں، اور تیری طرف ہی پلٹ کر جانا ہے',
+        tr: 'Allah\'ım, seninle sabaha ereriz, seninle akşama ereriz, seninle yaşarız, seninle ölürüz ve dönüş sanadır',
+        ms: 'Ya Allah, dengan Engkau kami masuk pagi dan petang, dengan Engkau kami hidup dan mati, dan kepada Engkaulah kebangkitan',
+        fr: 'Ô Allah, par Toi nous entrons le matin et le soir, par Toi nous vivons et mourons, et vers Toi est la résurrection'
+      },
+      { 
+        ar: 'أَصْبَحْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', 
+        en: 'We have entered morning upon the natural religion of Islam and the word of sincere devotion',
+        ur: 'ہم نے صبح کی اسلام کی فطرت اور اخلاص کے کلمے پر',
+        tr: 'Sabaha İslam\'ın fıtratı ve ihlas kelimesi üzere girdik',
+        ms: 'Kami telah memasuki pagi atas fitrah Islam dan kalimah ikhlas',
+        fr: 'Nous avons entré le matin sur la religion naturelle de l\'Islam et la parole de sincère dévotion'
+      },
+      { 
+        ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', 
+        en: 'Glory is to Allah and praise is to Him',
+        ur: 'اللہ پاک ہے اور اس کی حمد ہے',
+        tr: 'Allah\'ı tesbih ederim ve O\'na hamd ederim',
+        ms: 'Maha Suci Allah dan segala puji bagi-Nya',
+        fr: 'Gloire à Allah et louange à Lui'
+      },
+      { 
+        ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', 
+        en: 'There is no deity but Allah alone, with no partner',
+        ur: 'اللہ کے سوا کوئی معبود نہیں، وہ اکیلا ہے، اس کا کوئی شریک نہیں',
+        tr: 'Allah\'tan başka ilah yoktur, O birdir, ortağı yoktur',
+        ms: 'Tiada tuhan melainkan Allah yang Maha Esa, tiada sekutu bagi-Nya',
+        fr: 'Il n\'y a de divinité qu\'Allah seul, sans associé'
+      },
+      { 
+        ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', 
+        en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet',
+        ur: 'میں اللہ کو اپنا رب، اسلام کو اپنا دین اور محمد صلی اللہ علیہ وسلم کو اپنا نبی مان کر راضی ہوں',
+        tr: 'Allah\'ı Rab, İslam\'ı din ve Muhammed\'i peygamber olarak razı oldum',
+        ms: 'Aku redha dengan Allah sebagai Tuhanku, Islam sebagai agamaku, dan Muhammad sebagai Nabiku',
+        fr: 'Je suis satisfait d\'Allah comme Seigneur, de l\'Islam comme religion, et de Muhammad comme Prophète'
+      }
     ],
     evening: [
-      { ar: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ', en: 'We have entered evening, and all sovereignty belongs to Allah' },
-      { ar: 'اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ', en: 'O Allah, by You we enter evening and morning, by You we live and die, and to You is the final return' },
-      { ar: 'أَمْسَيْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', en: 'We have entered evening upon the natural religion of Islam and the word of sincere devotion' },
-      { ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', en: 'Glory is to Allah and praise is to Him' },
-      { ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', en: 'There is no deity but Allah alone, with no partner' },
-      { ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet' }
+      { 
+        ar: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ', 
+        en: 'We have entered evening, and all sovereignty belongs to Allah',
+        ur: 'ہم نے شام کی اور تمام بادشاہی اللہ کی ہے',
+        tr: 'Akşama girdik ve tüm egemenlik Allah\'ındır',
+        ms: 'Kami telah memasuki petang, dan segala kedaulatan adalah milik Allah',
+        fr: 'Nous avons entré le soir, et toute souveraineté appartient à Allah'
+      },
+      { 
+        ar: 'اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ', 
+        en: 'O Allah, by You we enter evening and morning, by You we live and die, and to You is the final return',
+        ur: 'اے اللہ! تیرے ذریعے ہم شام اور صبح کو پہنچتے ہیں، تیرے ذریعے ہم جیتے اور مرتے ہیں، اور تیری طرف ہی پلٹ کر جانا ہے',
+        tr: 'Allah\'ım, seninle akşama ereriz, seninle sabaha ereriz, seninle yaşarız, seninle ölürüz ve dönüş sanadır',
+        ms: 'Ya Allah, dengan Engkau kami masuk petang dan pagi, dengan Engkau kami hidup dan mati, dan kepada Engkaulah tempat kembali',
+        fr: 'Ô Allah, par Toi nous entrons le soir et le matin, par Toi nous vivons et mourons, et vers Toi est le retour final'
+      },
+      { 
+        ar: 'أَمْسَيْنَا عَلَى فِطْرَةِ الْإِسْلَامِ وَكَلِمَةِ الْإِخْلَاصِ', 
+        en: 'We have entered evening upon the natural religion of Islam and the word of sincere devotion',
+        ur: 'ہم نے شام کی اسلام کی فطرت اور اخلاص کے کلمے پر',
+        tr: 'Akşama İslam\'ın fıtratı ve ihlas kelimesi üzere girdik',
+        ms: 'Kami telah memasuki petang atas fitrah Islam dan kalimah ikhlas',
+        fr: 'Nous avons entré le soir sur la religion naturelle de l\'Islam et la parole de sincère dévotion'
+      },
+      { 
+        ar: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (100x)', 
+        en: 'Glory is to Allah and praise is to Him',
+        ur: 'اللہ پاک ہے اور اس کی حمد ہے',
+        tr: 'Allah\'ı tesbih ederim ve O\'na hamd ederim',
+        ms: 'Maha Suci Allah dan segala puji bagi-Nya',
+        fr: 'Gloire à Allah et louange à Lui'
+      },
+      { 
+        ar: 'لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ (100x)', 
+        en: 'There is no deity but Allah alone, with no partner',
+        ur: 'اللہ کے سوا کوئی معبود نہیں، وہ اکیلا ہے، اس کا کوئی شریک نہیں',
+        tr: 'Allah\'tan başka ilah yoktur, O birdir, ortağı yoktur',
+        ms: 'Tiada tuhan melainkan Allah yang Maha Esa, tiada sekutu bagi-Nya',
+        fr: 'Il n\'y a de divinité qu\'Allah seul, sans associé'
+      },
+      { 
+        ar: 'رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا (3x)', 
+        en: 'I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet',
+        ur: 'میں اللہ کو اپنا رب، اسلام کو اپنا دین اور محمد صلی اللہ علیہ وسلم کو اپنا نبی مان کر راضی ہوں',
+        tr: 'Allah\'ı Rab, İslam\'ı din ve Muhammed\'i peygamber olarak razı oldum',
+        ms: 'Aku redha dengan Allah sebagai Tuhanku, Islam sebagai agamaku, dan Muhammad sebagai Nabiku',
+        fr: 'Je suis satisfait d\'Allah comme Seigneur, de l\'Islam comme religion, et de Muhammad comme Prophète'
+      }
     ]
   };
 
@@ -392,6 +483,11 @@ const PrayerTimesApp = () => {
     return isRTL ? `${day}، ${date.getDate()} ${month} ${date.getFullYear()}` : `${day}, ${month} ${date.getDate()}, ${date.getFullYear()}`;
   };
 
+  // Function to get translation for current language
+  const getAdhkarTranslation = (adhkarItem) => {
+    return adhkarItem[language] || adhkarItem.en; // Fallback to English if translation not available
+  };
+
   // Toggle functions that update both state and localStorage
   const toggleLanguage = (langCode) => {
     setLanguage(langCode);
@@ -419,7 +515,7 @@ const PrayerTimesApp = () => {
       {/* Adhkar Modal */}
       {showAdhkar && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className={`bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto ${isRTL ? 'text-right' : 'text-left'}`}>
+          <div className={`bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto ${isRTL ? 'text-right' : ''}`}>
             <div className="sticky top-0 bg-emerald-600 text-white p-6 rounded-t-2xl flex items-center justify-between">
               <h2 className="text-2xl font-bold">{adhkarType === 'morning' ? t.morningAdhkar : t.eveningAdhkar}</h2>
               <button onClick={() => setShowAdhkar(false)} className="p-2 hover:bg-emerald-700 rounded-lg">
@@ -428,9 +524,35 @@ const PrayerTimesApp = () => {
             </div>
             <div className="p-6 space-y-6">
               {adhkarData[adhkarType].map((adhkar, i) => (
-                <div key={i} className="bg-emerald-50 rounded-xl p-6 border-l-4 border-emerald-600">
-                  <p className="text-2xl text-gray-800 mb-4 leading-relaxed font-arabic" style={{fontFamily: 'Traditional Arabic, serif'}}>{adhkar.ar}</p>
-                  <p className="text-gray-600 leading-relaxed">{adhkar.en}</p>
+                <div key={i} className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border-l-4 border-emerald-600">
+                  {/* Arabic Text - Always Displayed */}
+                  <div className="mb-4">
+                    <p className="text-2xl text-gray-800 leading-relaxed font-arabic text-right" 
+                      style={{fontFamily: 'Traditional Arabic, serif', lineHeight: '2'}}>
+                      {adhkar.ar}
+                    </p>
+                  </div>
+                  
+                  {/* Only show translation if language is NOT Arabic */}
+                  {language !== 'ar' && (
+                    <>
+                      {/* Separator */}
+                      <div className="flex items-center my-4">
+                        <div className="flex-1 border-t border-emerald-200"></div>
+                        <div className="px-3 text-emerald-600 font-semibold text-sm">
+                          {t.translation || 'Translation'}
+                        </div>
+                        <div className="flex-1 border-t border-emerald-200"></div>
+                      </div>
+                      
+                      {/* Translation - Bottom */}
+                      <div className={`text-gray-700 leading-relaxed ${isRTL ? 'text-right' : ''}`}>
+                        <p className="text-lg" style={{lineHeight: '1.8'}}>
+                          {getAdhkarTranslation(adhkar)}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -508,7 +630,7 @@ const PrayerTimesApp = () => {
           </div>
         </div>
 
-        {/* Adhkar Buttons - Moved to Top */}
+        {/* Adhkar Buttons - Top Section */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <button 
             onClick={() => { setAdhkarType('morning'); setShowAdhkar(true); }}
